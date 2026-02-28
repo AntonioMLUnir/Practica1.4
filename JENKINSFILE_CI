@@ -63,7 +63,7 @@ pipeline {
                         --stack-name staging-todo-list-aws \
                         --query "Stacks[0].Outputs[?OutputKey=='BaseUrlApi'].OutputValue" \
                         --output text)
-                        
+
                         pytest -s -v --junitxml=rest_report.xml test/integration/todoApiTest.py
                     '''
                     
@@ -86,6 +86,7 @@ pipeline {
                         git fetch origin
                         git checkout master
                         git merge origin/develop
+                        
                         git push origin master
                     '''
                 }
