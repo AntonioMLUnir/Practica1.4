@@ -52,7 +52,6 @@ class TestApi(unittest.TestCase):
         
         print('End - integration test List TODO')
     
-    @pytest.mark.read_only
     def test_api_addtodo(self):
         print('---------------------------------------')
         print('Starting - integration test Add TODO')
@@ -118,7 +117,6 @@ class TestApi(unittest.TestCase):
         )
         print('End - integration test Get TODO')
     
-    @pytest.mark.read_only
     def test_api_updatetodo(self):
         print('---------------------------------------')
         print('Starting - integration test Update TODO')
