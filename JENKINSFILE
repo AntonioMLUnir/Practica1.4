@@ -1,4 +1,7 @@
+//JENKINSFILE CD
+
 pipeline {
+    
     agent any
     
     options {
@@ -6,39 +9,10 @@ pipeline {
     }
     
     stages {
-        
         stage('Get Code') {
             steps {
                 deleteDir()
-                git branch: 'develop', url: 'https://github.com/AntonioMLUnir/Practica1.4'
-            }
-        }
-               
-        stage('Static') {
-            parallel {
-                stage('Flake8') {
-                    steps {
-                        sh '''
-                            set PYTHONPATH=%WORKSPACE%
-                            python3 -m flake8 src/ --exit-zero --format=pylint --output-file=flake8_report.txt
-                        '''
-                    }
-                }
-                
-                stage('Seguridad') {
-                    steps {
-                        sh '''
-                            set PYTHONPATH=%WORKSPACE%
-                            bandit -r src/ -f txt -o bandit_report.txt
-                        '''
-                    }
-                }
-            }
-            
-            post {
-                always {
-                    archiveArtifacts artifacts: 'flake8_report.txt, bandit_report.txt', followSymlinks: false
-                }
+                git 'https://github.com/AntonioMLUnir/Practica1.4'
             }
         }
         
@@ -47,7 +21,7 @@ pipeline {
                 sh '''
                     sam build
                     sam validate --region us-east-1
-                    sam deploy --config-env staging --no-confirm-changeset --resolve-s3 --no-fail-on-empty-changeset
+                    sam deploy --config-env production --no-confirm-changeset --resolve-s3 --no-fail-on-empty-changeset
                 '''
             }
         }
@@ -60,35 +34,14 @@ pipeline {
                         
                         export BASE_URL=$(aws cloudformation describe-stacks \
                         --region us-east-1 \
-                        --stack-name staging-todo-list-aws \
+                        --stack-name todo-list-aws-production \
                         --query "Stacks[0].Outputs[?OutputKey=='BaseUrlApi'].OutputValue" \
                         --output text)
 
-                        pytest -s -v --junitxml=rest_report.xml test/integration/todoApiTest.py
+                        pytest -s -v -m read_only --junitxml=rest_report_cd.xml test/integration/todoApiTest.py
                     '''
                     
-                    junit 'rest_report.xml'
-                }
-            }
-        }
-        
-        stage('Promoción') {
-            
-            when {
-                expression { currentBuild.result == 'SUCCESS' || currentBuild.result == null }
-            }
-
-            steps {
-                withCredentials([usernamePassword(credentialsId:'Jenkins-GitHub', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                    sh '''
-                        git remote set-url origin https://${USER}:${PASS}@github.com/AntonioMLUnir/Practica1.4.git
-                        
-                        git fetch origin
-                        git checkout master
-                        git merge origin/develop
-                        
-                        git push origin master
-                    '''
+                    junit 'rest_report_cd.xml'
                 }
             }
         }
