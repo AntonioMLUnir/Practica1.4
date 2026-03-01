@@ -84,14 +84,18 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId:'Jenkins-GitHub', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                     sh '''
                         git remote set-url origin https://${USER}:${PASS}@github.com/AntonioMLUnir/Practica1.4.git
-                        
-                        git fetch origin
+                        git fetch origin master
                         git checkout master
                         git reset --hard origin/master
+                    
                         git merge origin/develop --no-commit --no-ff
-                        git checkout HEAD -- Jenkinsfile
-                        git commit -m "Promote: Merge develop a master conservando Jenkinsfile de CD"
-                        git push https://github.com/AntonioMLUnir/Practica1.4.git master
+                    
+                        git checkout HEAD -- JENKINSFILE
+                        git checkout HEAD -- JENKINSFILE_agentes
+                    
+                       
+                        git commit -m "Merge sin JENKINSFILES"
+                        git push origin master
                     '''
                 }
             }
