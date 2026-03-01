@@ -1,4 +1,4 @@
-//JENKINSFILE_CD
+//JENKINSFILE CD
 
 pipeline {
     
