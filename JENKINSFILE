@@ -30,7 +30,7 @@ pipeline {
             steps {
                  catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                      sh '''
-                        set PYTHONPATH=.
+                        export PYTHONPATH=${WORKSPACE}
                         
                         export BASE_URL=$(aws cloudformation describe-stacks \
                         --region us-east-1 \
