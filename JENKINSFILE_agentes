@@ -1,0 +1,71 @@
+//JENKINSFILE_agentes CD
+
+def baseUrlApi = ""
+
+pipeline {
+    
+    agent { label 'built-in' }
+    
+    options {
+        skipDefaultCheckout true
+    }
+    
+    stages {
+        stage('Get Code') {
+            agent { label 'built-in' }
+            steps {
+                deleteDir()
+                
+                git 'https://github.com/AntonioMLUnir/Practica1.4'
+                
+                sh '''
+                    hostname
+                    whoami 
+                '''
+                stash name:'code', includes:'**'
+            }
+        }
+        
+        stage('Deploy') {
+            agent { label 'built-in' }
+            steps {
+                unstash name:'code'
+                sh '''
+                    whoami
+                    hostname
+                    
+                    sam build
+                    sam validate --region us-east-1
+                    sam deploy --config-env production --no-confirm-changeset --resolve-s3 --no-fail-on-empty-changeset
+                '''
+                
+                script {
+                    baseUrlApi = sh(
+                        script: "aws cloudformation describe-stacks --region us-east-1 --stack-name todo-list-aws-production --query 'Stacks[0].Outputs[?OutputKey==`BaseUrlApi`].OutputValue' --output text",
+                        returnStdout: true
+                    ).trim()
+                }
+            }
+        }
+        
+        stage('Rest Test') {
+            agent {label 'nodo-linux2'}
+            steps {
+                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                     unstash name:'code'
+                     sh """
+                        whoami
+                        hostname
+                        
+                        export PYTHONPATH=${WORKSPACE}
+                        export BASE_URL=${baseUrlApi}
+
+                        pytest -s -v -m read_only --junitxml=rest_agents_report.xml test/integration/todoApiTest.py
+                    """
+                    
+                    junit 'rest_agents_report.xml'
+                }
+            }
+        }
+    }
+}
