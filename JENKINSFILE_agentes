@@ -38,9 +38,9 @@ pipeline {
                             hostname
                             
                             export PYTHONPATH=${WORKSPACE}
-                            python3 -m flake8 src/ --exit-zero --format=pylint --output-file=flake8_report.txt
+                            python3 -m flake8 src/ --exit-zero --format=pylint --output-file=flake8_report_agentes.txt
                         '''
-                        stash name:'flake8-report', includes:'flake8_report.txt'
+                        stash name:'flake8-report', includes:'flake8_report_agentes.txt'
                     }
                 }
                 
@@ -54,9 +54,9 @@ pipeline {
                             
                             export PYTHONPATH=${WORKSPACE}
                             
-                            bandit -r src/ -f txt -o bandit_report.txt
+                            bandit -r src/ -f txt -o bandit_report_agentes.txt
                         '''
-                        stash name:'bandit-report', includes:'bandit_report.txt'
+                        stash name:'bandit-report', includes:'bandit_report_agentes.txt'
                     }
                 }
             }
@@ -65,7 +65,7 @@ pipeline {
                 always {
                     unstash 'flake8-report'
                     unstash 'bandit-report'
-                    archiveArtifacts artifacts: 'flake8_report.txt, bandit_report.txt', fingerprint: true
+                    archiveArtifacts artifacts: 'flake8_report_agentes.txt, bandit_report_agentes.txt', fingerprint: true
                 }
             }
         }
@@ -104,10 +104,10 @@ pipeline {
                         export PYTHONPATH=${WORKSPACE}
                         export BASE_URL=${baseUrlApi}
 
-                        pytest -s -v --junitxml=rest_report.xml test/integration/todoApiTest.py
+                        pytest -s -v --junitxml=rest_report_agentes.xml test/integration/todoApiTest.py
                     """
                     
-                    junit 'rest_report.xml'
+                    junit 'rest_report_agentes.xml'
                 }
             }
         }
@@ -129,11 +129,12 @@ pipeline {
                         git checkout master
                         git reset --hard origin/master
                     
-                        git merge origin/develop --no-commit --no-ff
+                        git merge origin/develop --no-commit --no-ff || true
                     
                         git checkout HEAD -- JENKINSFILE
                         git checkout HEAD -- JENKINSFILE_agentes
                     
+                        git add .
                         git commit -m "Merge sin JENKINSFILES"
                         git push origin master
                     '''
