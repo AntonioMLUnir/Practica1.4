@@ -21,7 +21,8 @@ pipeline {
                 stage('Flake8') {
                     steps {
                         sh '''
-                            set PYTHONPATH=%WORKSPACE%
+                            export PYTHONPATH=${WORKSPACE}
+                            
                             python3 -m flake8 src/ --exit-zero --format=pylint --output-file=flake8_report.txt
                         '''
                     }
@@ -30,7 +31,8 @@ pipeline {
                 stage('Seguridad') {
                     steps {
                         sh '''
-                            set PYTHONPATH=%WORKSPACE%
+                            export PYTHONPATH=${WORKSPACE}
+                            
                             bandit -r src/ -f txt -o bandit_report.txt
                         '''
                     }
@@ -58,7 +60,7 @@ pipeline {
             steps {
                  catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                      sh '''
-                        set PYTHONPATH=.
+                        export PYTHONPATH=${WORKSPACE}
                         
                         export BASE_URL=$(aws cloudformation describe-stacks \
                         --region us-east-1 \
